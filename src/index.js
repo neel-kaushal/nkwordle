@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState} from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
@@ -51,6 +51,7 @@ function Game(props) {
   const [guessMatrix, updateGuessMatrix] = useState(originalGuessMatrixState())
   const [keyboard, updateKeyBoard] = useState(originalKeyBoardState)
   const [result, updateResult] = useState(false)
+  const [validWord, toggleValidWord] = useState(true)
 
   const createWordDict = () => {
     const wordDict = {}
@@ -87,6 +88,7 @@ function Game(props) {
       updatedGuessMatrix[activeRow][activeSquare-1] = {letter: '', color: "black"}
       updateGuessMatrix(updatedGuessMatrix)
       updateLetter('')
+      toggleValidWord(true)
     }
 
     if(activeSquare > 0) {
@@ -100,15 +102,18 @@ function Game(props) {
     updateGuessMatrix(updatedGuessMatrix)
     updateLetter('')
     updateActiveSquare(0)
+    toggleValidWord(true)
   }
 
   const enterGuess = () => {
 
-    if(!totalPermittedGuesses.includes(guessMatrix[activeRow].map( (element) => {return element.letter }).join('').toLowerCase())) {
-      return <div> {"That's not a word. Try guessing something else."} </div>
-    }
-
     if(activeSquare === 5 && activeRow < 6) {
+
+      if(showInvalidWordMessage()) {
+          toggleValidWord(false)
+          return
+      }
+
       incrementActiveRow(activeRow + 1)
       updateActiveSquare(0)
       updateLetter('')
@@ -180,9 +185,15 @@ function Game(props) {
     return {updatedGuessMatrix: updatedGuessMatrix, updatedKeyBoard: updatedKeyBoard, correctGuess: correctLetters === 5 ? true: false}
   }
 
+  const showInvalidWordMessage = () => {
+    const letterString = guessMatrix[activeRow].map( (element) => {return element.letter })
+    return letterString.filter((letter) => letter !=='').length === 5 && !totalPermittedGuesses.includes(letterString.join('').toLowerCase())
+  }
+
   return (
     <div className="game">
       <Result result={result} activeRow={activeRow} word={word}/>
+      {!validWord ? <div> {"That's not a valid word. Try something else."} </div> : null}
       <Board activeSquare={activeSquare} guessMatrix={guessMatrix} activeRow={activeRow} letter={letter} word={word} />
       <Keyboard updateLetter={onLetterClick} backspace={deleteLetter} clear={clearGuess} enter={enterGuess} keyboard={keyboard} />
     </div>
@@ -261,7 +272,6 @@ function Result(props) {
   else {
     return <h1>{`You lost! The word was ${props.word} `}</h1>
   }
-
 }
 
 ReactDOM.render(
